@@ -9,7 +9,7 @@
 # words = ["apple","Banana","kiwi","Cherry"]
 # length_filter = [n for n in words if len(n) > 4]
 
-# Question 4(Not Done)
+# Question 4
 # words = ["apple","Banana","kiwi","Cherry"]
 # tuple_words = tuple((n, len(n)) for n in words)
 
@@ -40,7 +40,7 @@
 # words = ["apple","Banana","kiwi","Cherry"]
 # words_dict = {n : len(n) for n in words}
 
-# Question 12 (no idea)
+# Question 12
 # words = ["apple","Banana","kiwi","Cherry"]
 # words_dict = {len(n): n for n in words}
 
