@@ -2,9 +2,6 @@ words   = ["apple","Banana","kiwi","Cherry"]
 nums    = [3,-1,4,-1,5]
 weights = [10,20,30,40,50]
 
-# Multiply them element-wise into a new list
-# Zip words and nums — explain what the length difference does
-# Build a dict from words and nums
 # Iterate words and nums together with an index
 
 # Question 1
@@ -26,6 +23,17 @@ weights = [10,20,30,40,50]
 # print(tuples)
 
 # Question 5
-for i, x in zip(words, nums):
-    print(i * x)
+# output = []
+# for num, weight in zip(nums, weights):
+#     output.append(num * weight)
 
+# Question 6
+# idk
+
+# Question 7
+# dictionary = {word: num for word, num in zip(words, nums)}
+
+# Question 8
+for i in range(zip(words, nums)):
+    print(words[i])
+    print(nums[i])
