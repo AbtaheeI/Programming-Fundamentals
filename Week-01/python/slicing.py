@@ -12,7 +12,7 @@ nums = [0,1,2,3,4,5,6,7,8,9]
 # print(nums[3:7])
 
 # Question 4
-# print(nums[9:])
+# print(nums[-1::])
 
 # Question 5
 # print(nums[-2:])
@@ -27,20 +27,23 @@ nums = [0,1,2,3,4,5,6,7,8,9]
 # print(nums[::-1])
 
 # Question 9
-# print(nums[::-1][::2])
+# print(nums[10:0:-2])
 
 # Question 10 
 # print(nums[-8:-2])
 
 # Question 11
 # new_nums = nums[:]
+# new_nums[2] = 23
+# print(new_nums)
+# print(nums)
 
 # Question 12
 # nums[10:20]
 
 s = "the quick brown fox"
 # Question 13
-# print(s[-3::])
+# print(s[-3:])
 
 # Question 14
 # print(s[::-1])
