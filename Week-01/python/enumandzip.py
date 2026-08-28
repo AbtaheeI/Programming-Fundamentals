@@ -1,5 +1,5 @@
-words   = ["apple","Banana","kiwi","Cherry"]
-nums    = [3,-1,4,-1,5]
+words = ["apple","Banana","kiwi","Cherry"]
+nums = [3,-1,4,-1,5]
 weights = [10,20,30,40,50]
 
 # Question 1
