@@ -5,7 +5,8 @@ Redo it cold. When it comes out unaided, move it to Closed with both dates.
 
 ## Open
 
-- [ ] _(nothing yet)_
+- [ ] 28 Aug — Merge Sorted Array — needed hint on drain loop
+- [ ] 28 Aug — Best Time to Buy and Sell Stock — brute force only, one-pass not understood
 
 ## Closed
 
