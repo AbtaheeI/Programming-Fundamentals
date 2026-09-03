@@ -20,6 +20,10 @@ What clicked, what didn't, and what to carry forward.
 
 **`sorted(key=)`** — the key is a function. `sorted` calls it once per element and supplies the argument. Bare references (`len`, `str.lower`) work when the element *is* the thing being measured; digging into a structure means writing your own function. Tuple keys give multi-level sorts; negate a number to reverse just that level.
 
+**When a comprehension is the wrong tool.** It builds a collection and can't return early. Contains Duplicate needs a boolean and an early exit, so no comprehension exists for it. `return` is a statement and can't live inside an expression.
+
+**`range(len(x))` only when position matters.** Used it unnecessarily twice — Contains Duplicate and Running Sum. If you only touch `x[i]`, loop over values instead.
+
 ---
 
 ## Data structures
@@ -38,6 +42,8 @@ Trade-off: sets lose order and can't hold duplicates. Use `.add()`, not `.append
 - `while` — you're looping until a condition changes. Multiple counters moving at different rates, or an end condition based on values rather than position.
 
 **The tell:** if you're writing a guard inside a `for` that duplicates what the loop condition should be, it should be a `while`. Hit this on Merge Sorted Array.
+
+**`range()` is evaluated once, before the loop starts.** Changing a variable used in its bounds inside the loop does nothing — the range object is already built. Thought `range(cheapest, ...)` would move with `cheapest`. It doesn't.
 
 ---
 
@@ -74,8 +80,16 @@ On an INNER JOIN it makes no difference. On a LEFT JOIN it changes everything �
 
 ---
 
+## Interview habits
+
+**Same complexity ≠ same speed.** `len(nums) != len(set(nums))` and the early-exit loop are both O(n), but the loop stops at the first duplicate while the one-liner always builds the whole set. Big-O hides that.
+
+**Built-ins that solve the whole problem answer a different question.** `accumulate` for Running Sum, `.sort()` for Merge Sorted Array, `set()` for Contains Duplicate — all correct, none demonstrate the reasoning being tested. Write the loop in an interview, the one-liner in production.
+
+**When two statements both modify state, ask which should see the other's change.** That question resolves ordering bugs. In Best Time to Buy and Sell Stock: should today's price be available as a buy when evaluating today as a sell? No — so compute profit before updating the minimum.
+
+---
+
 ## Open / revisit
 
-- Best Time to Buy and Sell Stock — one-pass version didn't land. Scheduled again Saturday.
-- Merge Sorted Array — needed a hint on the drain loop. Redo cold.
-- `RIGHT JOIN` — understood, but confirm the LEFT equivalent by rewriting one.
+- Nothing open. Week 1 problems all closed.
