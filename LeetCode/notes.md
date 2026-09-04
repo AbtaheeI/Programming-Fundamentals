@@ -78,6 +78,12 @@ On an INNER JOIN it makes no difference. On a LEFT JOIN it changes everything �
 
 **Empty-set aggregates.** `COUNT` returns 0. `SUM`, `AVG`, `MIN`, `MAX` return NULL. Wrap `SUM` in `COALESCE(..., 0)` when zero is the honest answer — but not `MAX`, where NULL genuinely means "no orders."
 
+**FULL OUTER JOIN** keeps orphans from both sides. LEFT keeps left orphans, RIGHT keeps right orphans, FULL keeps both. SQLite may not support it — the workaround is a UNION of LEFT and RIGHT, which shows what FULL is actually doing.
+
+**CROSS JOIN** pairs every row with every row, no ON clause. 6 × 8 = 48. Usually a bug — a missing or always-true join condition degenerates into this. Legitimate when you want every combination: all products × all regions, all dates × all stores.
+
+**Don't reach for the newest tool.** Used FULL OUTER on the cold redo for two anti-joins that only needed one side preserved. Working, but over-fetching and it hides which table you actually care about.
+
 ---
 
 ## Interview habits

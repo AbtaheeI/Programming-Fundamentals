@@ -1,0 +1,10 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "database": "${workspaceFolder:Programming-Fundamentals}/Week-01/sql/as.db",
+            "name": "Week1_Revision"
+        }
+    ]
+}
