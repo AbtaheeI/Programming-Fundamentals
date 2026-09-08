@@ -9,7 +9,7 @@ words = ["apple","Banana","kiwi","Cherry"]
 
 
 # Question 1
-# print(sorted(pairs, key = lambda pair: pair[1]))
+print(sorted(pairs, key = lambda pair: pair[1]))
 
 # Question 2
 # def get_second_element(pair):
