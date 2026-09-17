@@ -353,3 +353,107 @@ The count is a physical pile of tokens. It can't go negative — if it's empty t
 No seeding needed. The first iteration has count 0 and adopts `nums[0]` itself.
 
 This is the first problem this week where **the dict is the wrong answer.** After a week of hashmaps the trap is reaching for one by default. Next week is two pointers and sliding window for exactly that reason.
+
+---
+
+## Sun 6 Sep — SQL: subqueries and CTEs
+
+### The three places a subquery lives
+
+- **`WHERE`** → filters rows. `WHERE salary = (SELECT MAX...)`, `WHERE EXISTS (...)`
+- **`SELECT`** → adds a computed column, one value per row
+- **`FROM`** → a temporary table you then query. This is the one a CTE usually replaces
+
+A `SELECT` subquery must return **exactly one row and one column**. That's enforced, not style — a column slot holds one value. Which is why `COUNT`, `MAX`, `SUM`, `AVG` show up in there constantly: aggregates collapse many rows to one by definition. Zero rows gives `NULL`, not an error.
+
+### Correlated vs not
+
+**The test: cut the subquery out and run it alone. If it fails, it's correlated.**
+
+```sql
+(SELECT MAX(salary) FROM worker)                        -- runs alone. Executes ONCE.
+(SELECT COUNT(*) FROM orders o WHERE o.cust_id = c.id)  -- needs c. Executes PER ROW.
+```
+
+A correlated subquery runs once for every row of the outer query — n customers, n executions. That's usually why a query over a big table is slow. A `LEFT JOIN` + `GROUP BY` computes all of it in one pass.
+
+### The biggest subquery bug: the two halves disagree
+
+**A subquery or CTE passes values, not context.** Any filter that shaped the result stops existing the moment the result is handed over. If the outer query needs the same restriction, it has to say so itself.
+
+Hit this twice in one session, in both directions:
+
+```sql
+-- inner too BROAD, outer narrow → zero rows
+WHERE salary = (SELECT MAX(salary) FROM worker)     -- all workers
+FROM worker w INNER JOIN title t ON ...             -- only titled workers
+
+-- inner narrow, outer too BROAD → risk of extra rows
+WITH m AS (SELECT MAX(profits) FROM x WHERE sector='Financials')
+SELECT ... FROM x JOIN m ON x.profits = m.highest   -- no sector filter!
+```
+
+The second one *passed* — no non-financial company happened to match that exact number. Right by luck, not by construction. Add a row and it breaks.
+
+Also: **always alias an aggregate inside a CTE.** `SELECT MAX(profits)` produces a column with no usable name.
+
+### EXISTS
+
+Asks one yes/no question: **does this subquery return at least one row?** Doesn't care what's in them, or how many. One is enough.
+
+```sql
+WHERE EXISTS (
+    SELECT 1 FROM orders o
+    WHERE o.customer_id = c.customer_id AND o.amount > 100
+)
+```
+
+`SELECT 1` because the columns are never read. `SELECT *`, `SELECT 42` all behave identically — the convention signals to a reader that the values don't matter.
+
+**`EXISTS` stops at the first match.** A `JOIN` + `DISTINCT` produces every matching row then throws duplicates away. Identical on small data; on a customer with 10,000 qualifying orders the join builds 10,000 rows and dedupes them, `EXISTS` looks at one.
+
+The tell that you're in `EXISTS` territory: **you wrote `DISTINCT` and you selected nothing from the right-hand table.** Both say the join was a means to an end.
+
+### CTE vs subquery vs view
+
+| | Lives for | Visible to | Stores data? |
+|---|---|---|---|
+| Subquery | one spot in one statement | nothing else | no |
+| CTE | one statement | the rest of that statement | no |
+| View | until dropped | everyone with permission | **no** |
+
+**A view stores no data** — it stores the query *text*, and re-runs it every time. A materialised view is the one that stores results, and needs refreshing.
+
+CTEs over subqueries for: **reuse** within the statement (a subquery used twice is written twice), **chaining** (read top-to-bottom instead of a 3-level nest read inside-out), and **recursion** (`WITH RECURSIVE` walks hierarchies; subqueries can't at all).
+
+Not for speed. Most databases treat a CTE and its equivalent subquery identically. Choose for readability.
+
+Picking: used once and small → subquery · used twice or the query has stages → CTE · used across sessions or by other people → view.
+
+### CROSS JOIN is correct when there's nothing to join on
+
+A scalar CTE (one row, one value — a company-wide total) has no key. `CROSS JOIN` deliberately attaches that one row to every row of the other side.
+
+```sql
+WITH dept_totals AS (SELECT department, SUM(salary) AS total FROM employee GROUP BY department),
+     company_total AS (SELECT SUM(salary) AS company_total FROM employee)
+SELECT d.department, d.total, d.total * 100.0 / c.company_total AS pct
+FROM dept_totals d CROSS JOIN company_total c
+ORDER BY pct DESC
+```
+
+Two traps: **integer division** truncates to 0 — use `100.0`, not `100`. And **double quotes on an alias** mean "identifier, treat literally" in standard SQL, which forces case-sensitivity. Aliases need no quotes unless they contain spaces.
+
+Week 5 replaces this whole pattern with `SUM(salary) * 100.0 / SUM(SUM(salary)) OVER ()`.
+
+### Grouping level decides the join
+
+Grouping by `department, id` puts one row in each group, so the "average" is that person's own salary. **The `GROUP BY` list defines what the aggregate is over.** Average of a department → group by department alone, and then the join is on `department`, not `id`.
+
+---
+
+## Week 2 close
+
+Cold sweep, five problems, no notes. Three clean first attempt (Two Sum, Valid Anagram, Contains Duplicate II). Group Anagrams came out structurally right including `[0] * 26` inside the loop. Majority Element regressed to the bottom-check structure — stays open.
+
+The thing to carry into week 3: after a week of hashmaps the trap is reaching for a dict by default. Majority Element was the first problem where it's the wrong answer. Two pointers and sliding window are next for exactly that reason.

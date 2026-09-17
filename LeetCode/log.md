@@ -21,3 +21,8 @@
 | 4 Sep | Contains Duplicate II (cold) | Easy | Failed | | KeyError — wrote `len(check) != 0` instead of `value in check` |
 | 5 Sep | Group Anagrams | Medium | Hint | | **First medium.** Got the sorted-word key alone, plus tuple-for-hashability. Needed heavy prompting for the 26-slot counting key and `ord()`. Pattern: group by canonical form |
 | 5 Sep | Majority Element | Easy | Hint | | Dict version instant. Boyer-Moore needed most of a session — the token-pile model, `if/elif/else`, and checking `count == 0` at the top |
+| 6 Sep | Two Sum (cold) | Easy | Unaided | | Clean. Added a first-index guard that wasn't there before — fine here, but it's the opposite of Contains Duplicate II. Decide deliberately, don't let it creep in |
+| 6 Sep | Valid Anagram (cold) | Easy | Unaided | | `< 0` again, but explained the length-check dependency correctly this time. **Closed** |
+| 6 Sep | Contains Duplicate II (cold) | Easy | Unaided | | First attempt, `value in last_seen`. **Closed** |
+| 6 Sep | Group Anagrams (cold) | Medium | Unaided | | Counting version, structurally right cold including `[0] * 26` inside the loop. Slips: unused `key` variable, pointless f-string, typo. **Closed** |
+| 6 Sep | Majority Element (cold) | Easy | Hint | | Regressed to the bottom-check structure with `count < 1` and a `0` seed. Passes LeetCode either way — the guarantee hides it. **Stays open** |
