@@ -1,0 +1,293 @@
+# NeetCode video: Big-O Notation - For Coding Interviews
+
+## What Big-O measures
+Time complexity is how the **number of operations** grows as the input size (n) grows. It's not actual seconds. The same code runs faster on a better laptop, but its Big-O doesn't change.
+
+Space complexity is how much **extra memory** the algorithm uses as n grows. A few variables is O(1). A new list/set/dict that grows with the input is O(n).
+
+Rule: assume worst case everywhere **except** hashmaps (dict/set lookups are O(1) on average, worst case O(n) only if every key collides, which basically never happens).
+
+## The classes
+
+### O(1)
+Same time no matter how big n gets.
+- dict/set lookup and insertion (average)
+- `append` to the end of a list (amortised)
+- `pop()` from the end of a list
+
+### O(log n)
+Every step cuts what's left in half. How many times can you halve n until you hit 1? 2^x = n, so x = log2(n). Base doesn't matter in Big-O, just write log n.
+- Binary search: only works on sorted data. Check the middle, throw away the half the target can't be in, repeat. (Week 6)
+- Balanced BST: tree where left child is smaller, right child is bigger. Each step down halves the remaining nodes. (Week 9)
+
+### O(sqrt(n))
+- Getting all factors of a number. Factors come in pairs (12 = 2x6 = 3x4), so once you pass sqrt(n) you're only seeing the other half of pairs you already found.
+
+### O(n)
+Time grows at the same pace as n. Linear.
+- Single loop over the input
+- Searching an unsorted array
+- Inserting or deleting in the middle of an array (everything after has to shift)
+- `pop(0)` from the front of a list
+
+### O(n log n)
+- Sort first, then loop. `nums.sort()` is O(n log n), the loop is O(n), total O(n log n).
+- Merge sort and heapsort are how sorting works under the hood. (Week 9)
+
+### O(n^2)
+- Nested loops over the same input
+- Insertion sort: take each element and slide it left into the right spot in the sorted part. Each slide can be O(n), done n times.
+
+### O(n * m)
+Two independent input sizes. A rectangle, not a square.
+- Looping through a grid (rows x columns)
+- Looping through two different arrays nested
+- Don't simplify to n^2 unless the two sizes are actually the same.
+
+### O(n^3)
+- Triple nested loops
+
+### O(2^n)
+- Recursion where a function calls itself twice each time. 1 call becomes 2, then 4, then 8. Depth n gives 2^n calls.
+- Naive Fibonacci is the classic example. (Weeks 10 and 13)
+
+### O(n!)
+- Permutations: n choices for the first slot, n-1 for the second, n-2 for the third. Multiply them all and you get n!.
+- Some graph problems
+
+## Ranking: fastest to slowest
+1. O(1)
+2. O(log n)
+3. O(sqrt(n))
+4. O(n)
+5. O(n log n)
+6. O(n^2)
+7. O(n^3)
+8. O(2^n)
+9. O(n!)
+
+O(n * m) doesn't sit at a fixed spot. If m = 1 it's O(n). If m = n it's O(n^2). So it sits somewhere between O(n) and O(n^2) depending on m.
+
+
+# Week 3 Tuesday: Prefix Sums
+
+## The problem it solves
+Lots of questions like "what's the sum from index l to index r?"
+
+Brute force: loop from l to r and add. O(n) per query. With q queries that's O(n*q).
+Prefix sums: one O(n) pass up front, then every query is O(1).
+
+## What a prefix sum array is
+Each position stores the running total of everything before it.
+
+nums   = [2, 4, 1, 5]
+prefix = [0, 2, 6, 7, 12]
+
+- It's ONE LONGER than nums
+- prefix[0] = 0, the sum of zero elements
+- prefix[i] = sum of the FIRST i elements
+
+Running Sum from week 1 is this without the leading 0.
+
+## The formula
+sum of nums[l..r] = prefix[r + 1] - prefix[l]
+
+Everything before the range cancels out.
+
+## Why the leading 0
+Without it, a range starting at index 0 has nothing before it to subtract, so you need an `if l == 0` special case. The 0 makes "nothing before" a real slot, so there's one formula and no branch.
+
+Both versions are accepted in interviews. The padded one is preferred because:
+- Fewer special cases = fewer off-by-one errors under pressure
+- It scales: 2D prefix sums without padding need special cases for the top row, left column AND corner
+- Some later problems need the "sum of nothing = 0" slot to work at all
+
+Say why as you write it: "I pad with a 0 so a range starting at index 0 doesn't need a special case."
+
+Same idea as the dummy head node (week 7): one fake element that removes an edge case.
+
+## The code
+```python
+def build_prefix(nums):
+    prefix = [0] * (len(nums) + 1)
+
+    for index, value in enumerate(nums):
+        prefix[index + 1] = prefix[index] + value
+
+    return prefix
+
+def range_sum(prefix, l, r):
+    return prefix[r + 1] - prefix[l]
+```
+
+build_prefix: O(n) time, O(n) space
+range_sum: O(1) time, O(1) space
+
+No edge case branches needed. The formula handles empty ranges, single elements and the whole array on its own. Edge cases are things to TEST, not ifs to add.
+
+Gotcha: `[0] * len(nums) + 1` is wrong. `*` binds before `+`, so it's (list) + 1 and crashes. Needs `[0] * (len(nums) + 1)`.
+
+## Complexity tradeoff
+|              | Build | Each query | Space |
+|--------------|-------|------------|-------|
+| Brute force  | none  | O(n)       | O(1)  |
+| Prefix sums  | O(n)  | O(1)       | O(n)  |
+
+Worked example: array of 100,000, with 50,000 queries
+- Brute force: 50,000 x 100,000 = 5,000,000,000
+- Prefix sums: 100,000 build + 50,000 queries = 150,000
+- About 33,000x fewer operations
+
+## When brute force is actually better
+The build is a FIXED UPFRONT COST. It only pays off spread over enough queries.
+
+With only 2 queries on a 100,000 array:
+- Brute force: 200,000
+- Prefix sums: 100,002
+Basically the same, and prefix costs 100,000 slots of memory for it.
+
+So: few queries, or short ranges, and it's not worth it.
+
+Also: if the array CHANGES between queries the prefix array is invalid and you'd rebuild every time, which kills the whole idea. The structure for that case is a Fenwick tree (not on the plan, just know it exists).
+
+## The bigger idea: it's not just sums
+A prefix array stores a running total of ANYTHING COUNTABLE.
+Convert each element to a number, then prefix that. The query formula never changes.
+
+Counting evens in a range:
+nums    = [3, 4, 6, 1]
+is_even = [0, 1, 1, 0]      <- convert: even = 1, odd = 0
+prefix  = [0, 0, 1, 2, 2]   <- normal build_prefix on is_even
+
+Evens in nums[1..2] = prefix[3] - prefix[1] = 2 - 0 = 2
+
+prefix[i] now means "how many evens in the first i elements".
+
+Same trick for: how many negatives in a range, how many vowels in a substring, etc.
+
+## Signals in a problem
+"sum of a subarray", "range", "many queries", "contiguous"
+
+Prefix sums get much stronger paired with a hashmap (Saturday).
+
+## Sum shortcut worth remembering
+1 + 2 + 3 + ... + n = n(n+1)/2, which is O(n^2)
+
+Pairing proof: write the sum forwards and backwards, add column by column, every column is (n+1), there are n of them. So 2x the sum = n(n+1).
+
+Shows up any time a loop shrinks by one each round: nested loop with `range(i, n)`, string building with +=, insertion sort.
+
+# Week 3 Wednesday: XOR, Single Number, Missing Number
+
+## XOR basics
+XOR is `^`. Compares two numbers bit by bit. Each position gives 1 if the bits DIFFER, 0 if they're the same.
+
+  5  =  1 0 1
+  3  =  0 1 1
+  ^ -----------
+         1 1 0   = 6
+
+Three properties do all the work:
+- `x ^ x == 0`    anything XOR itself cancels to zero
+- `x ^ 0 == x`    zero leaves a number unchanged
+- order doesn't matter, so `a ^ b ^ c` can be rearranged freely
+
+Example: `2 ^ 7 ^ 2` = 7. Reorder to `2 ^ 2 ^ 7`, the 2s cancel to 0, and `0 ^ 7` is 7.
+
+## When to reach for XOR
+Signals:
+- Things appear in PAIRS and you want the odd one out
+- The problem explicitly demands O(1) extra space and a hashmap/set is the obvious answer
+- Finding the DIFFERENCE between two nearly-identical sets
+- Words like "appears twice", "appears once", "duplicate", "missing" next to a space constraint
+
+Don't use it when:
+- You need counts, not just presence
+- Things appear three times (different trick)
+- Order or position matters
+
+The reasoning path in an interview: "set version is O(n) space, they want O(1), what can I accumulate into a single variable?" Sum works. XOR works. Those are the two options in that bucket.
+
+It's only about 4-5 problems in the whole NeetCode 150. Small tool, sharp edge.
+
+## Single Number (LC 136)
+Every element appears twice except one. Find it.
+
+Hashmap version:
+```python
+count = {}
+for num in nums:
+    count[num] = count.get(num, 0) + 1
+for num in count:
+    if count[num] == 1:
+        return num
+```
+O(n) time, O(n) space. Dict holds up to n/2 + 1 keys.
+
+XOR version:
+```python
+result = 0
+for i in nums:
+    result ^= i
+return result
+```
+O(n) time, O(1) space.
+
+Why it works: every duplicate pair cancels to 0, and `0 ^ lone_number` is the lone number.
+
+## Missing Number (LC 268)
+n distinct numbers from the range [0, n]. One is missing.
+
+Set version:
+```python
+new_num = set(nums)
+for num in range(len(nums) + 1):
+    if num not in new_num:
+        return num
+```
+O(n) time, O(n) space.
+
+Maths version:
+```python
+expected = (len(nums) + 1) * len(nums) // 2
+return expected - sum(nums)
+```
+O(n) time (because of `sum(nums)`), O(1) space.
+Uses the n(n+1)/2 shortcut from Tuesday.
+Use `//` not `int(.../2)` — `/` makes a float and loses precision on big numbers.
+
+XOR version:
+```python
+output = 0
+for index, value in enumerate(nums):
+    output ^= index
+    output ^= value
+output ^= len(nums)
+return output
+```
+O(n) time, O(1) space.
+
+Why it works: XOR the whole range 0..n and all the values into one pile. Every number present in BOTH cancels itself. Only the missing one survives.
+
+The final `output ^= len(nums)` is the bit people miss: `enumerate` only reaches index n-1, but the range goes to n. That last index has to be added manually.
+
+Trace with nums = [0, 1, 3], n = 3:
+- range is 0,1,2,3 and values are 0,1,3
+- pile: 0^1^2^3^0^1^3
+- the 0s, 1s and 3s cancel, 2 survives
+
+## Complexity table
+| Version                   | Time | Space |
+|---------------------------|------|-------|
+| Single Number, hashmap    | O(n) | O(n)  |
+| Single Number, XOR        | O(n) | O(1)  |
+| Missing Number, set       | O(n) | O(n)  |
+| Missing Number, maths     | O(n) | O(1)  |
+| Missing Number, XOR       | O(n) | O(1)  |
+
+## Overflow (why the maths version is riskier in other languages)
+In Java/C++ an int has a fixed size (32 bits, max ~2.1 billion). Go past it and the number silently WRAPS to a large negative. Wrong answer, no error.
+
+With a big array, `n(n+1)/2` can blow past that even though the final answer is small.
+
+Python ints grow to whatever size they need, so there's no ceiling. If asked "what if this were Java?" the answer is: use a 64-bit type, or restructure to subtract as you go so the running total never gets large. The XOR version avoids the problem entirely.
