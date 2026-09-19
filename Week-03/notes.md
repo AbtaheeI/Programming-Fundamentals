@@ -291,3 +291,162 @@ In Java/C++ an int has a fixed size (32 bits, max ~2.1 billion). Go past it and 
 With a big array, `n(n+1)/2` can blow past that even though the final answer is small.
 
 Python ints grow to whatever size they need, so there's no ceiling. If asked "what if this were Java?" the answer is: use a 64-bit type, or restructure to subtract as you go so the running total never gets large. The XOR version avoids the problem entirely.
+
+# Week 3 Thursday: Subqueries & CTEs
+
+## Correlated vs uncorrelated
+UNCORRELATED: the inner query doesn't mention the outer query. Computed ONCE, reused for every row.
+```sql
+SELECT name FROM employees
+WHERE salary > (SELECT AVG(salary) FROM employees);
+```
+
+CORRELATED: the inner query references the outer query's alias. Recomputed FOR EVERY ROW.
+```sql
+SELECT name FROM employees e
+WHERE salary > (SELECT AVG(salary) FROM employees WHERE dept_id = e.dept_id);
+```
+The `e.dept_id` is what makes it correlated. The answer changes per row, so SQL can't reuse it.
+
+Cost: outer has n rows, inner scans n rows each time = O(n^2). Same nested loop shape as Python.
+
+Nuance for interviews: query planners often rewrite correlated subqueries into joins or window functions, so it isn't always O(n^2) in practice. Assume the worst when writing, reach for a CTE or window function on big tables.
+
+## Using a CTE that holds ONE value
+Caught me three times in one session. A CTE is a TABLE, not a value. You can't reference its column bare in a WHERE.
+
+Wrong:
+```sql
+WHERE cool = max_cool          -- max_cool is a table, SQL has no idea what this is
+```
+
+Three ways to fix:
+1. Subquery expression: `WHERE cool = (SELECT max_cool FROM maximum_cool)`
+2. CROSS JOIN it in: one row crossed onto every row puts the column in scope
+3. INNER JOIN on the comparison: `JOIN maximum_cool m ON c.cool = m.max_cool`
+
+CROSS JOIN is the cleanest for "one value I need everywhere".
+
+Also: always alias an aggregate. `SELECT MAX(cool)` gives an auto-generated column name you can't reference. `SELECT MAX(cool) AS max_cool`.
+
+## GROUP BY rule (hit this twice in two days)
+THE COLUMN YOU'RE AGGREGATING NEVER APPEARS IN THE GROUP BY.
+
+Grouping by the thing you're trying to collapse means nothing collapses. Each distinct value becomes its own group and the aggregate only ever sees one row.
+
+Wrong:
+```sql
+SELECT id, SUM(bonus) FROM t GROUP BY id, bonus     -- one row per bonus, SUM does nothing
+```
+Right:
+```sql
+SELECT id, SUM(bonus) FROM t GROUP BY id
+```
+
+GROUP BY holds the columns you want ONE ROW PER. Nothing else.
+
+## Aggregating twice at two grains
+The main reason to reach for a CTE.
+
+Signal: "I need to aggregate, then aggregate the RESULT of that aggregate."
+
+Income by Title and Gender:
+```sql
+WITH total_compensation AS (
+    SELECT e.employee_title, e.sex, (e.salary + SUM(b.bonus)) AS total
+    FROM sf_employee e INNER JOIN sf_bonus b ON e.id = b.worker_ref_id
+    GROUP BY e.id, e.employee_title, e.sex, e.salary
+)
+SELECT employee_title, sex, AVG(total) AS avg_compensation
+FROM total_compensation
+GROUP BY employee_title, sex
+```
+CTE grain: one row per EMPLOYEE (bonuses summed).
+Outer grain: one row per TITLE+SEX (employees averaged).
+
+Can't be done in one query. You can't average totals that don't exist yet.
+
+Also: carry through the columns the outer query needs (title, sex). Saves joining back to the source table.
+
+## Chained CTEs
+Each CTE can reference any CTE defined BEFORE it. Forwards only.
+
+```sql
+WITH customer_totals AS (
+  SELECT cust_id, SUM(total_order_cost) AS total_spent
+  FROM orders GROUP BY cust_id
+),
+avg_spending AS (
+  SELECT AVG(total_spent) AS avg_total
+  FROM customer_totals          -- reads the one above
+)
+SELECT ...
+FROM customer_totals ct
+CROSS JOIN avg_spending a
+WHERE ct.total_spent > a.avg_total
+```
+
+Swap their order and it breaks. Each CTE is one step, building on the steps before it.
+
+## When a CTE is NOT pulling its weight
+A CTE earns its place when it TRANSFORMS something: aggregates, filters, reshapes.
+One that only picks columns is a rename, not a step.
+
+```sql
+WITH cool_reviews AS (
+    SELECT business_name, review_text, cool FROM yelp_reviews    -- pointless
+)
+```
+Just query the table directly.
+
+## CASE WHEN: text to rankable numbers
+Signal: "highest severity", "worst", "best" on a TEXT column. Convert to numbers first, then MAX.
+
+```sql
+MAX(CASE WHEN risk_category = 'High Risk' THEN 3
+         WHEN risk_category = 'Moderate Risk' THEN 2
+         WHEN risk_category = 'Low Risk' THEN 1
+         ELSE 0
+    END) AS risk_level
+```
+Needs `END`, needs an alias, and it's one item in the SELECT list so it needs a comma after it.
+
+## CASE WHEN: pivoting rows into columns
+Turn one column of categories into several columns of counts.
+
+```sql
+SUM(CASE WHEN risk_level = 0 THEN 1 ELSE 0 END) AS no_risk,
+SUM(CASE WHEN risk_level = 1 THEN 1 ELSE 0 END) AS low_risk,
+SUM(CASE WHEN risk_level = 2 THEN 1 ELSE 0 END) AS moderate_risk,
+SUM(CASE WHEN risk_level = 3 THEN 1 ELSE 0 END) AS high_risk,
+COUNT(*) AS total
+```
+Each CASE gives 1 when it matches, 0 when it doesn't. SUM adds them up.
+
+## Clause evaluation order
+FROM -> WHERE -> GROUP BY -> HAVING -> SELECT -> ORDER BY
+
+Consequences:
+- WHERE CANNOT see SELECT aliases. SELECT runs later, the alias doesn't exist yet.
+- ORDER BY CAN see them. It runs after SELECT.
+- HAVING exists because you need a way to filter AFTER grouping.
+
+To filter on a computed column, three options:
+1. Repeat the whole expression in WHERE (works, but now it's written twice)
+2. Wrap it in another CTE and filter outside (cleanest)
+3. HAVING, but only when filtering an aggregate straight after a GROUP BY
+
+## Integer division
+`dept_size / total` truncates to 0 when both are ints. A trailing `* 100.0` is TOO LATE, the division already happened.
+
+Fix: `CAST(dept_size AS FLOAT) / NULLIF(total, 0) * 100`
+
+`dept_size * 100.0 / total` also works via precedence, but the CAST says what you mean, survives edits, and behaves the same across engines.
+
+`NULLIF(x, 0)` guards divide-by-zero by turning 0 into NULL.
+
+## Join gotcha
+```sql
+JOIN dept_avg d ON e.department = e.department     -- always true, silent cross join
+```
+Check the alias on BOTH sides of an ON clause. `e.x = e.x` is a cross join in disguise.
