@@ -450,3 +450,105 @@ Fix: `CAST(dept_size AS FLOAT) / NULLIF(total, 0) * 100`
 JOIN dept_avg d ON e.department = e.department     -- always true, silent cross join
 ```
 Check the alias on BOTH sides of an ON clause. `e.x = e.x` is a cross join in disguise.
+
+# Week 3 Friday: Intersection of Two Arrays, Plus One
+
+## Intersection of Two Arrays (LC 349)
+Two arrays, return elements in both. Result must be unique, order doesn't matter.
+
+Brute force:
+```python
+ls = set()
+for i in nums1:
+    for j in nums2:
+        if j == i:
+            ls.add(j)
+return list(ls)
+```
+O(n*m) time. Space O(min(n, m)) — the set can only hold values present in BOTH arrays, so it's capped by the smaller array.
+
+Set version:
+```python
+hash_set = set(nums1)
+result = set()
+for i in nums2:
+    if i in hash_set:
+        result.add(i)
+return list(result)
+```
+O(n + m) time: O(n) to build the set, O(m) for the loop. Sequential, so they add.
+O(n) space.
+
+Note: `i not in result` before `result.add(i)` is redundant. A set already ignores duplicate adds. Same class of mistake as using a dict when only the keys matter — let the data structure do its job.
+
+One-liner:
+```python
+return list(set(nums1).intersection(nums2))
+```
+`.intersection()` takes any iterable, so no need to wrap nums2 in set() — that's O(m) space for nothing.
+`set(nums1) & set(nums2)` is the operator form.
+
+Interview approach: write the explicit version first to show the reasoning, THEN say "in production I'd use the built-in". You get credit for both.
+
+## Follow-up: what if both arrays were sorted?
+Then you don't need a set at all. Two pointers, one per array, O(1) space.
+
+- Values EQUAL: it's a match, move both pointers
+- Left value SMALLER: move the left pointer
+
+Why the left value can be discarded: the right array is SORTED, so everything after the current right value is >= it. If the left value is smaller than the current right value, it can never appear later in the right array. Safe to skip forever.
+
+That's the two-pointer invariant (week 4).
+
+## Plus One (LC 66)
+Array of digits, most significant first. Add one, return the new digit array.
+
+```python
+right = len(digits) - 1
+carry = 1
+while right >= 0:
+    digits[right] += carry
+    carry = 0
+    if digits[right] == 10:
+        carry = 1
+    digits[right] %= 10
+    if carry == 0:
+        return digits
+    right -= 1
+
+if carry == 1:
+    digits.insert(0, 1)
+return digits
+```
+O(n) time, O(1) extra space.
+
+The three cases:
+- [1,2,3] -> [1,2,4]   no carry, returns after one step
+- [1,2,9] -> [1,3,0]   one carry
+- [9,9,9] -> [1,0,0,0] carry all the way out. THIS is the whole problem.
+
+## Why it walks right to left
+A carry flows LEFTWARD. When index 2 overflows, index 1 is affected.
+
+Walking left to right, you'd process index 0 before knowing whether index 1 is going to send it a carry, so you'd have to go back and fix it.
+
+SIGNAL WORTH REMEMBERING: when information flows in one direction, iterate AGAINST that direction. Same reasoning behind several later patterns.
+
+## Why the all-nines case can't be handled inside the loop
+After the loop, [9,9,9] has become [0,0,0] with carry still set. There's no index -1 to carry into, so the extra digit has to be prepended AFTER the loop ends.
+
+Condition must be `if carry:`, not `if digits[0] == 0`.
+
+The digits[0] version happens to pass on LeetCode because the constraints ban leading zeros, but it's correct by accident of the input rules rather than by logic. Feed it [0,9] and it breaks. Write the condition that says what you MEAN.
+
+## Cost of the insert
+`list.insert(0, x)` is O(n), everything shifts.
+
+Inside the loop that would be O(n) x O(n) = O(n^2).
+Outside the loop it runs at most ONCE: O(n) loop + O(n) insert = O(n).
+
+Sequential blocks ADD, nested blocks MULTIPLY (Monday's rule).
+
+## Space nuance for interviews
+The insert creates a list of size n+1, but that's the OUTPUT, and output space isn't usually counted.
+If pushed: "O(1) auxiliary, O(n) if you count the returned array."
