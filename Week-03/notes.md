@@ -552,3 +552,158 @@ Sequential blocks ADD, nested blocks MULTIPLY (Monday's rule).
 ## Space nuance for interviews
 The insert creates a list of size n+1, but that's the OUTPUT, and output space isn't usually counted.
 If pushed: "O(1) auxiliary, O(n) if you count the returned array."
+
+# Week 3 Saturday: Subarray Sum Equals K, Product of Array Except Self
+
+## Subarray Sum Equals K (LC 560)
+Count contiguous subarrays summing to k. Array can contain NEGATIVES.
+
+### Brute force
+```python
+subarrays = 0
+for i in range(len(nums)):
+    total = 0
+    for j in range(i, len(nums)):
+        total += nums[j]
+        if total == k:
+            subarrays += 1
+```
+O(n^2) time, O(1) space.
+
+Bugs I hit:
+- Inner loop starting at `i + 1` — misses single-element subarrays. A subarray of ONE element is valid.
+- `break` on a match — wrong, because negatives mean a subarray can overshoot k and come back to it. Keep going.
+- Resetting `total = 0` mid-loop — that restarts the sum, so you're no longer measuring from i.
+
+Note: [1,1,1] with k=2 returns 2. Same values at different POSITIONS both count. It's not asking for unique value-sequences.
+
+Habit: if the lines above a loop duplicate the loop body, the loop should absorb them. `range(i, n)` instead of `range(i+1, n)` plus three lines of setup.
+
+### Prefix sum version (a dead end, but worth doing)
+Same nested loops, using `prefix[j+1] - prefix[i]` instead of a running total.
+Still O(n^2) time, and now O(n) space. STRICTLY WORSE.
+
+Why prefix sums didn't help: they turn ONE arbitrary range sum from O(n) into O(1). But the brute force was already O(1) per range, because `total += nums[j]` reuses the previous total. Prefix sums pay off for arbitrary ranges in any order, not for ranges that grow by one each step.
+
+What it DID give me: the equation.
+
+### The real solution
+Start from `sum(nums[l..r]) == k`, write it with the prefix formula, rearrange:
+
+**prefix[l] = prefix[r+1] - k**
+
+Read it as: at every position, how many EARLIER running totals are exactly k below the current one? Each one is a subarray ending here.
+
+```python
+seen = {0: 1}      # running total 0 has happened once, before any element
+total = 0
+answer = 0
+
+for num in nums:
+    total += num
+    answer += seen.get(total - k, 0)      # how many earlier points give a gap of k
+    seen[total] = seen.get(total, 0) + 1  # record this running total
+
+return answer
+```
+O(n) time, O(n) space.
+
+### The things that confused me
+**Where did the prefix ARRAY go?** `total` IS the prefix sum. The equation only needs the current prefix value plus a lookup on past ones — never by position, only by value and count. So a dict of {value: count} replaces the array. `seen = {0: 1}` is Tuesday's leading zero.
+
+**Why a dict, not a set?** The same running total can occur more than once, and each occurrence is a different starting point. `[1,-1,1]` with k=1: at the last element, total 0 was seen TWICE before, so two subarrays end there. You add the COUNT, not 1.
+
+**Does `.get(total - k, 0)` store anything?** No. `.get` only READS, and returns the default if the key is missing. The only write is `seen[total] = ...`, which stores the real running total. Lookups for values that never existed (negatives etc.) just return 0 and change nothing.
+
+**Isn't this double counting?** No. Each loop step counts only subarrays ENDING at that position. A subarray has exactly one end, so it's counted at exactly one step.
+
+**Where did the inner loop go?** Brute force's inner loop asked every possible start "do you give me k?". The dict answers all of those in one O(1) lookup. THE HASHMAP REPLACES THE INNER LOOP. Same move as Two Sum.
+
+### Two details that decide whether it passes
+1. **Seed `{0: 1}`** — without it, a subarray starting at index 0 finds nothing. Trace [3], k=3.
+2. **Lookup BEFORE recording** — if you record first, k=0 makes every total find itself and count an empty subarray. [0,0] with k=0: lookup-first gives 3, record-first gives 5.
+
+### Why not a sliding window
+Negatives. A window relies on "adding an element grows the sum, removing one shrinks it". With negatives that's false, so you can't decide when to shrink.
+
+---
+
+## Product of Array Except Self (LC 238)
+output[i] = product of everything except nums[i]. Division banned.
+
+### Brute force
+Nested loops, skipping i. O(n^2) time, O(1) extra space.
+
+### The framing (the whole insight)
+**output[i] = (product of everything LEFT of i) x (product of everything RIGHT of i)**
+
+nums   = [1,  2,  3,  4]
+left   = [1,  1,  2,  6]     product of everything BEFORE index i
+right  = [24, 12, 4,  1]     product of everything AFTER index i
+output = [24, 12, 8,  6]     left[i] * right[i]
+
+left[0] = 1 and right[n-1] = 1 — the product of NOTHING is 1, same way the sum of nothing is 0.
+
+### O(n) space version
+```python
+left = [1] * len(nums)
+for i in range(1, len(nums)):
+    left[i] = left[i - 1] * nums[i - 1]
+
+right = [1] * len(nums)
+for i in reversed(range(len(nums) - 1)):
+    right[i] = right[i + 1] * nums[i + 1]
+
+output = [1] * len(nums)
+for i in range(len(nums)):
+    output[i] = left[i] * right[i]
+```
+O(n) time, O(n) space. Three sequential loops, so they ADD.
+
+Arrays are length n, NOT n+1. Tuesday needed the extra slot because `range_sum` read `prefix[r+1]`. Here nothing reads past index n-1.
+
+### O(1) space version
+Never need both arrays at once. Write left into `output`, replace right with a single variable.
+```python
+output = [1] * len(nums)
+
+for i in range(1, len(nums)):
+    output[i] = output[i - 1] * nums[i - 1]
+
+value = 1
+for i in reversed(range(len(nums))):
+    output[i] = output[i] * value
+    value *= nums[i]
+```
+O(n) time, O(1) extra space (output doesn't count).
+
+Second loop order matters: multiply into output[i] FIRST, then fold nums[i] into `value`. That keeps `value` holding everything strictly RIGHT of i.
+
+Range is `reversed(range(len(nums)))` — every index including the last. Using `len(nums) - 1` skips output[n-1] and silently returns the left array unchanged.
+
+Don't write into `nums` — mutating the input is usually off-limits, and you'd destroy values you still need to read.
+
+### Zeros
+[1,0,3] -> [0,3,0]. Every index except the zero's own position gets 0. The zero's position gets the product of the rest. No special casing needed.
+
+### Why division is banned
+1. Breaks on zeros. `total / 0` crashes, and you'd need three code paths: no zeros, exactly one zero, two or more zeros.
+2. Division is slower than multiplication at hardware level, and brings truncation/float precision issues in other languages.
+3. Really it's the interviewer forcing the prefix/suffix insight, which is the actual thing being tested.
+
+---
+
+## Reverse loops in Python
+To walk down to and INCLUDING index 0:
+```python
+range(n - 1, -1, -1)        # stop is exclusive, so -1 to include 0
+reversed(range(n))          # same thing, easier to read
+```
+Use `reversed()` when writing. Know `range(a, -1, -1)` on sight, it's everywhere in other people's code.
+
+## Signals from today
+**Count of contiguous subarrays summing to a target, with negatives** -> prefix sums + hashmap. The hashmap replaces the inner loop over start positions.
+
+**A value at every index that depends on all the OTHER elements, division banned** -> split into left-of-i and right-of-i, precompute each as a running product.
+
+Habit worth keeping: write down the FRAMING SENTENCE and what should have triggered it, not the solution. Ten of those beats fifty solved problems you can't index into. 
