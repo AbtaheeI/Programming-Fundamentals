@@ -26,3 +26,16 @@
 | 6 Sep | Contains Duplicate II (cold) | Easy | Unaided | | First attempt, `value in last_seen`. **Closed** |
 | 6 Sep | Group Anagrams (cold) | Medium | Unaided | | Counting version, structurally right cold including `[0] * 26` inside the loop. Slips: unused `key` variable, pointless f-string, typo. **Closed** |
 | 6 Sep | Majority Element (cold) | Easy | Hint | | Regressed to the bottom-check structure with `count < 1` and a `0` seed. Passes LeetCode either way — the guarantee hides it. **Stays open** |
+| 18 Sep | Single Number | Easy | Unaided | | Went straight to XOR after the primer, then wrote the hashmap version for contrast. Pairs cancel, `0 ^ x = x` |
+| 18 Sep | Missing Number | Easy | Hint | 25+ | Set and maths (`n(n+1)//2`) versions unaided. XOR version needed the `[0,1,3]` trace to land. Final `^= len(nums)` because enumerate stops one short |
+| 19 Sep | Intersection of Two Arrays | Easy | Unaided | | Set version first. Redundant `not in result` check before `.add()`. Brute force, one-liner, and derived the sorted two-pointer rules with prompting |
+| 20 Sep | Plus One | Easy | Hint | | Needed a walkthrough of what hand-tracing means. Insert first sat inside the loop keyed on `digits[0] == 0`; early return added after prompting. Walk right to left because carries flow left |
+| 21 Sep | Subarray Sum Equals K | Medium | Failed | | Brute force after three loop fixes. Prefix-array version was O(n²) and O(n) space, strictly worse. Needed the full hashmap code before `prefix[l] = prefix[r+1] - k` clicked |
+| 23 Sep | Product of Array Except Self | Medium | Hint | | Left-times-right framing handed over. Needed help on reverse loop bounds (`range(n-2, -1, -1)`). O(1) version came after range fix |
+| 24 Sep | Single Number (cold) | Easy | Unaided | | Self-reported |
+| 24 Sep | Missing Number (cold) | Easy | Unaided | | Two-pass XOR, range then values. **Closed** |
+| 24 Sep | Intersection of Two Arrays (cold) | Easy | Unaided | | Set plus `remove()` to handle uniqueness. Couldn't produce the sorted follow-up without the rules restated |
+| 24 Sep | Plus One (cold) | Easy | Hint | | Logic survived, details didn't: lost the early return and `if carry:` from Friday, then dropped the final `return digits` |
+| 24 Sep | Prefix sum build + range_sum (cold) | Easy | Unaided | | Correct first time. Wrote it as a script before wrapping in functions |
+| 24 Sep | Subarray Sum Equals K (cold) | Medium | Unaided | | Self-reported. **Closed** |
+| 24 Sep | Product of Array Except Self (cold) | Medium | Hint | | O(n) space clean. O(1) failed twice: no accumulator, then read `output[j]` while writing `output[j-1]`. **Stays open** |
