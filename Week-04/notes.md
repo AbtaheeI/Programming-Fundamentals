@@ -66,3 +66,58 @@ return w
 - "In place", "return k", "first k elements" → reader/writer
 - Middle of something, cycles → fast/slow
 - Need original indexes → hashmap, don't sort
+
+# Week 4 Wednesday · Valid Palindrome + Move Zeroes
+
+## LC 125 Valid Palindrome (converging)
+l, r = 0, len(s) - 1
+while l < r:
+    if not s[l].isalnum():
+        l += 1
+        continue
+    elif not s[r].isalnum():
+        r -= 1
+        continue
+    elif s[l].lower() != s[r].lower():
+        return False
+    l += 1
+    r -= 1
+return True
+
+- O(n) time, O(1) space.
+- `continue` after a skip sends it back through `while l < r`, so the bounds check comes free.
+- Don't use `list(s)` to read characters. Strings index directly with `s[l]`. `list(s)` builds a whole new list every call: inside a loop that's O(n²) time, O(n) space.
+- Only need `list(s)` when you want to CHANGE characters (strings are immutable).
+- Cleaned string vs `[::-1]` works but is O(n) space. Pointer version is the target.
+
+## LC 283 Move Zeroes (reader/writer)
+
+Swap version, one pass:
+k = 0
+for i in range(len(nums)):
+    if nums[i] != 0:
+        nums[k], nums[i] = nums[i], nums[k]
+        k += 1
+
+- Swap pushes the zero forward instead of losing it.
+- Invariant: before `k` = finished non-zeros. From `k` to `i - 1` = always zeros.
+- When there are no zeros yet, `k == i` and it swaps with itself. Harmless.
+
+Two-loop version:
+k = 0
+for i in range(len(nums)):
+    if nums[i] != 0:
+        nums[k] = nums[i]
+        k += 1
+for i in range(k, len(nums)):
+    nums[i] = 0
+
+- Tuesday's overwrite loop, then fill the tail with zeros.
+- Unlike Tuesday, `nums[k:]` can't be left as junk here: the problem wants the zeros there.
+
+Both: O(n) time, O(1) space.
+- Writes: swap = 2 per non-zero. Two loops = n total. Swap is NOT faster.
+- Interview answer: name both, same complexity. Two loops is easier to reason about, swap is a single pass.
+
+## General
+- In-place problems return nothing. Drop `return nums`. (Flagged Monday too.)
