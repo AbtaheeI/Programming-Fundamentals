@@ -121,3 +121,37 @@ Both: O(n) time, O(1) space.
 
 ## General
 - In-place problems return nothing. Drop `return nums`. (Flagged Monday too.)
+
+# Week 4 Thursday · Date, time & text functions (SQL)
+
+## Text
+- `a || b` concatenates. Anything `|| NULL` = NULL, and COUNT skips NULLs, so rows silently vanish.
+- `COALESCE(x, '')` swaps NULL for a fallback. Use it on each part before concatenating.
+- Partial data (only a last name) is still a valid row. Only drop rows the question tells you to.
+- `STRING_TO_ARRAY(s, ';')` + `UNNEST` splits one row into many. Postgres won't allow UNNEST in GROUP BY: split in a CTE, name the column, group in the outer query.
+- `REGEXP_SPLIT_TO_TABLE(LOWER(s), '[^a-z]+')` splits into words, dropping punctuation. Needs 2 args. Lowercase first or capitals get split out.
+- Splitting leaves `''` at the ends. Filter with `<> ''`. `IS NOT NULL` doesn't catch it.
+- Check blanks: NULL or `''`? `IS NOT NULL` only catches NULL.
+
+## Dates (Postgres)
+- `date + INTERVAL '1 day'` shifts a date.
+- Self-join on dates for "compared to yesterday": `ON w2.recordDate + INTERVAL '1 day' = w1.recordDate` means w2 is the day BEFORE w1. Plug in a real date to check direction.
+- Don't join on ids for "the previous day". Nothing says ids go in date order.
+- `BETWEEN a AND b` is inclusive both ends. "30 days ending X" includes X, so start = X minus 29.
+- `EXTRACT(DAY FROM d)` = day of month (1–31), not the date. If the column's already a date, group by it directly.
+
+## SQLite equivalents (for VS Code)
+- EXTRACT / YEAR() → `strftime('%Y', d)` (returns text: compare to '2026')
+- DATE_TRUNC month → `strftime('%Y-%m', d)`
+- DATEDIFF → `julianday(a) - julianday(b)`
+- `d + INTERVAL '7 days'` → `date(d, '+7 days')`
+
+## Percentages
+- Single-value CTE attaches with `CROSS JOIN`, no ON.
+- Put `100.0` FIRST: `COUNT(*) * 100.0 / total`. Integer / integer truncates to 0.
+
+## GROUP BY rule (4th time)
+- GROUP BY = what one output row means. Find the "for each" in the question.
+- Anything inside COUNT/SUM must NOT be in GROUP BY, or every bucket holds one value and the answer is trivial.
+- Selecting a plain column not in GROUP BY errors in Postgres. Aggregate it.
+- ORDER BY the aggregate's alias, not the raw column.
