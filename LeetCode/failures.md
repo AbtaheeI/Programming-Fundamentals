@@ -13,6 +13,12 @@ Redo it cold. When it comes out unaided, move it to Closed with both dates.
   First attempt had no accumulator, so each slot only got one element from the right. Second attempt added `run` but read `output[j]` while writing `output[j-1]`, and the range skipped index n-1.
   Must get, unprompted: the framing sentence first, "output[i] = everything left of i × everything right of i" · left pass writes into `output` · right pass uses ONE variable, not an array · walk EVERY index, `reversed(range(len(nums)))` · read and write the SAME slot · multiply into `output[i]` FIRST, then fold `nums[i]` into the variable.
 
+- [ ] 27 Sep — **Rising Temperature (LC 197)** — joined on id = id, then had the date direction backwards (thought w2 was tomorrow) and returned yesterday's id.
+  Must get, unprompted: join ON the date condition, no ids · plug in a real date to check which alias is yesterday · select the id of the day being judged.
+
+- [ ] 29 Sep — **Remove Duplicates from Sorted Array (LC 26)** — heavy guidance. Compared k to k+1 instead of reading nums[i], branches swapped (wrote on duplicates), wrote before moving k, returned k instead of k + 1.
+  Must get, unprompted: decide what k means BEFORE coding ("last kept" or "next empty") · reader starts at 1 · duplicates do nothing · new value: move k, then write · return matches the convention.
+
 ## Closed
 
 - [x] 28 Aug — Merge Sorted Array — hint on drain loop — solved cold 29 Aug
@@ -27,17 +33,19 @@ Redo it cold. When it comes out unaided, move it to Closed with both dates.
 
 These cost time in multiple sessions. None of them are conceptual.
 
-- **Repeating a key expression instead of assigning it to `key`** — flagged six times. On 6 Sep you finally made the variable and then didn't use it on the next line. `tuple(...)` is O(k) per call, so by Group Anagrams this stopped being cosmetic
+- **Repeating a key expression instead of assigning it to `key`** — flagged six times. On 6 Sep you finally made the variable and then didn't use it on the next line. `tuple(...)` is O(k) per call, so by Group Anagrams this stopped being cosmetic. Two Sum II on 27 Sep computed the sum twice per loop
 - **`.get(k, default)` inside `if k not in d`** — the `.get()` can only return the default. Unreachable code, and unreachable code is where bugs hide
 - **Naming**: `i` for a non-index (4x) · `is_valid` / `valid` for a dict of counts (3x) · `alphabet` for a list of counts · `immutable_conversion` describing the mechanism instead of the meaning
-- **Sending code before running it** — the `complement` line outside the loop, the `immuatble_conversion` typo, `employees` vs `employee`, `return subarrays3`. Run it first
+- **Sending code before running it** — the `complement` line outside the loop, the `immuatble_conversion` typo, `employees` vs `employee`, `return subarrays3`. Week 4: swap line that swapped a value with itself, `RIGHTWITH`, `yelp_businesses`, missing `)` on UNNEST, `t.total_orders` after renaming the column. Run it first
 - **Dead edge-case branches** — 18 Sep, `range_sum` had `if len(prefix) == 0` and `== 1` guards that could never fire. Edge cases are things to **test**, not `if`s to add. Ask "can this condition actually happen?" before writing the branch
 - **Fixed details regressing on the cold redo** — Plus One on 24 Sep lost the early return and the `if carry:` after the loop, both of which were fixed on Friday. Then dropped the final `return digits`. The logic survived, the details didn't. When you close a problem, write down the two or three details you had to be told, and check for them on the redo
 - **Loop bounds off by one** — `range(1, len(nums), -1)`, stop at 1 instead of -1, `range(len(nums) - 1)` skipping the last index. Before running any loop, say out loud which indices it visits
+- **Returning `nums` from in-place functions** — Monday reverse, Wednesday Move Zeroes. In-place means return nothing (or k if asked). Returning the list makes callers think it's a copy
 
 ## SQL habits
 
-- **A CTE holding one value used bare in WHERE** — three times on 19 Sep. A CTE is a table, not a value. It enters through FROM (CROSS JOIN) or a subquery expression, never `WHERE x = cte_name`
-- **Aggregating over a column that's also in the GROUP BY** — `b.bonus` on 18 Sep, `risk_category` on 19 Sep. Nothing collapses. The column you aggregate never goes in GROUP BY
+- **A CTE holding one value used bare in WHERE, or joined ON a column it doesn't have** — three times on 19 Sep, then `ON c.id = t.id` on 25 Sep. A one-row CTE attaches with CROSS JOIN, no ON
+- **Aggregating over a column that's also in the GROUP BY** — `b.bonus` 18 Sep, `risk_category` 19 Sep, `review_count` 25 Sep, `user_id` 27 Sep. Four times. Check before running: anything inside COUNT/SUM must not be in GROUP BY. Find the "for each" in the question, that's the only thing you group by
 - **Aliases used outside the query they belong to** — `b.worker_ref_id` in the outer query (18 Sep), `l.user_id` in the final SELECT (23 Sep). An alias defined inside a CTE doesn't exist outside it
 - **Aggregate in WHERE** — `timestamp = MAX(timestamp)` on 23 Sep. WHERE runs before GROUP BY. Filter with WHERE, aggregate in SELECT with GROUP BY
+- **NULL vs ''** — `IS NOT NULL` doesn't catch empty strings, and `x || NULL` is NULL. Check which one the blanks are before filtering

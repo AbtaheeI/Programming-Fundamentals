@@ -155,3 +155,33 @@ Both: O(n) time, O(1) space.
 - Anything inside COUNT/SUM must NOT be in GROUP BY, or every bucket holds one value and the answer is trivial.
 - Selecting a plain column not in GROUP BY errors in Postgres. Aggregate it.
 - ORDER BY the aggregate's alias, not the raw column.
+
+# Week 4 Friday · Two Sum II + Remove Duplicates
+
+## LC 167 Two Sum II (converging)
+- Signal: sorted + find a pair + O(1) space. No hashmap this time.
+- sum > target → r -= 1 (need smaller). sum < target → l += 1 (need bigger). Equal → return.
+- Return is 1-indexed: [l + 1, r + 1].
+- Store the sum in a variable once per loop, don't compute it twice.
+- O(n) time, O(1) space. A fixed-size returned list (2 items) is still O(1): space is what GROWS with n.
+
+## LC 26 Remove Duplicates from Sorted Array (reader/writer)
+k = 0
+for i in range(1, len(nums)):
+    if nums[k] != nums[i]:
+        k += 1
+        nums[k] = nums[i]
+return k + 1
+
+- First element is always kept, so k = 0 and the reader starts at 1.
+- Sorted means duplicates are adjacent: comparing against the last kept value is enough.
+- Duplicate → do nothing. No else needed.
+- New value → MOVE k, THEN write. Writing first overwrites the kept value.
+- k = last kept INDEX → count is k + 1.
+- Empty list would return 1 (wrong). LeetCode guarantees n ≥ 1, but say it in an interview.
+- O(n) time, O(1) space.
+
+## Two k conventions
+- Tuesday: k = next EMPTY slot, starts at 0, write then move, return k.
+- Friday: k = last KEPT slot, starts at 0, move then write, return k + 1.
+- Both work. Decide which one BEFORE writing. Mixing them caused every bug today.
