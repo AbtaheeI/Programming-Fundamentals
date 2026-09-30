@@ -19,6 +19,9 @@ Redo it cold. When it comes out unaided, move it to Closed with both dates.
 - [ ] 29 Sep — **Remove Duplicates from Sorted Array (LC 26)** — heavy guidance. Compared k to k+1 instead of reading nums[i], branches swapped (wrote on duplicates), wrote before moving k, returned k instead of k + 1.
   Must get, unprompted: decide what k means BEFORE coding ("last kept" or "next empty") · reader starts at 1 · duplicates do nothing · new value: move k, then write · return matches the convention.
 
+- [ ] 30 Sep — **3Sum (LC 15)** — brute force had index tied to j (neighbour bug). O(n²) needed heavy guidance: sorted() result thrown away, left/right set once outside the for, no pointer move after a match (hang), reset to the ends after a match, left -= 1 in the else, stored -nums[i], skip check inside the while (hang), nums[i - 1] at i = 0, skip condition flipped.
+  Must get, unprompted: nums.sort() · break if nums[i] > 0 · skip if i > 0 and same as previous, BEFORE setting pointers · left = i + 1, right = end · on match: append, both in, skip repeats on left · explain why moving inward can't miss a pair.
+
 ## Closed
 
 - [x] 28 Aug — Merge Sorted Array — hint on drain loop — solved cold 29 Aug
@@ -33,7 +36,7 @@ Redo it cold. When it comes out unaided, move it to Closed with both dates.
 
 These cost time in multiple sessions. None of them are conceptual.
 
-- **Repeating a key expression instead of assigning it to `key`** — flagged six times. On 6 Sep you finally made the variable and then didn't use it on the next line. `tuple(...)` is O(k) per call, so by Group Anagrams this stopped being cosmetic. Two Sum II on 27 Sep computed the sum twice per loop
+- **Repeating a key expression instead of assigning it to `key`** — flagged six times. On 6 Sep you finally made the variable and then didn't use it on the next line. `tuple(...)` is O(k) per call, so by Group Anagrams this stopped being cosmetic. Two Sum II on 27 Sep computed the sum twice per loop, Container With Most Water on 30 Sep computed the area twice
 - **`.get(k, default)` inside `if k not in d`** — the `.get()` can only return the default. Unreachable code, and unreachable code is where bugs hide
 - **Naming**: `i` for a non-index (4x) · `is_valid` / `valid` for a dict of counts (3x) · `alphabet` for a list of counts · `immutable_conversion` describing the mechanism instead of the meaning
 - **Sending code before running it** — the `complement` line outside the loop, the `immuatble_conversion` typo, `employees` vs `employee`, `return subarrays3`. Week 4: swap line that swapped a value with itself, `RIGHTWITH`, `yelp_businesses`, missing `)` on UNNEST, `t.total_orders` after renaming the column. Run it first

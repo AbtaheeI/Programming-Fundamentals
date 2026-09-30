@@ -185,3 +185,50 @@ return k + 1
 - Tuesday: k = next EMPTY slot, starts at 0, write then move, return k.
 - Friday: k = last KEPT slot, starts at 0, move then write, return k + 1.
 - Both work. Decide which one BEFORE writing. Mixing them caused every bug today.
+
+# Week 4 Saturday · 3Sum + Container With Most Water
+
+## LC 15 3Sum (sort + fix one + converging)
+nums.sort()
+output = []
+for i in range(len(nums)):
+    if nums[i] > 0:
+        break
+    if i > 0 and nums[i] == nums[i - 1]:
+        continue
+    left, right = i + 1, len(nums) - 1
+    while left < right:
+        total = nums[left] + nums[right]
+        if total == -nums[i]:
+            output.append([nums[i], nums[left], nums[right]])
+            left += 1
+            right -= 1
+            while left < right and nums[left] == nums[left - 1]:
+                left += 1
+        elif total > -nums[i]:
+            right -= 1
+        else:
+            left += 1
+return output
+
+- Fix nums[i], then it's Two Sum II with target -nums[i] (a + b + c = 0 → b + c = -a).
+- Sort first: makes pointer moves meaningful (left up = sum up, right down = sum down) and puts duplicates next to each other.
+- left = i + 1: can't reuse nums[i], and everything before i already had its turn as the fixed number.
+- On a match, BOTH move in: the pair is used up, and a new pair with the same sum needs one side up AND one side down.
+- Can't miss a pair: each move discards a number that can't work with anything left. Too big → nums[right] is too big even with the smallest left, drop it. Too small → mirror.
+- Duplicates, two sources:
+  - same fixed value twice → skip i if nums[i] == nums[i - 1]. Needs i > 0: nums[-1] is the LAST element in Python, not an error.
+  - same pair values after a match → after moving in, skip left while it repeats. Right sorts itself out: new left + old right is too big, so the normal rule moves right.
+- The skip check goes in the FOR, not the WHILE. `continue` inside the while restarts the while with nothing moved → infinite loop.
+- break when nums[i] > 0: sorted, so everything after is positive too. > 0 not >= 0, since [0, 0, 0] is valid.
+- sorted(nums) returns a new list, nums.sort() sorts in place. Calling sorted(nums) without assigning it does nothing.
+- Brute force: three independent loops, each starting at the previous + 1. O(n³). Dedupe with set of tuple(sorted(triplet)).
+- tuple(sorted(x)): sorted works on any iterable and returns a list. tuple() converts, doesn't nest.
+- O(n²) time (loop × converging pass, beats the O(n log n) sort). O(1) extra space with nums.sort(), not counting output.
+
+## LC 11 Container With Most Water (converging)
+- Area = min(left, right) height × (right - left).
+- Always move the SHORTER wall. Why: area is capped by the short wall. Keeping it while the width shrinks can only give a smaller area. So its best container is already measured. Throw it away.
+- Moving the tall wall instead could throw away containers that are still bigger.
+- Compute the area once per loop (variable or max()).
+- O(n) time, O(1) space.
