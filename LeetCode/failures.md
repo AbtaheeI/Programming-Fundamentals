@@ -5,10 +5,6 @@ Redo it cold. When it comes out unaided, move it to Closed with both dates.
 
 ## Open
 
-- [ ] 5 Sep — **Majority Element (Boyer-Moore)** — failed the cold redo on 6 Sep, second time in two days. Reverted to checking the count at the *bottom* with `count < 1` and a `majority_element = 0` seed.
-  Must get, unprompted: `count == 0` checked at the **top** · `if / elif / else`, not two `if`s · adopt with `count = 1` · no seed needed.
-  It passes LeetCode either way because a true majority survives sloppy bookkeeping. That's exactly why the cold rep is the only real test. If you can't state the cancellation argument while writing it, it isn't learned.
-
 - [ ] 23 Sep — **Product of Array Except Self (O(1) space version)** — needed the left-times-right framing handed over on 23 Sep. Cold redo 24 Sep: O(n) space version came clean, O(1) version failed twice.
   First attempt had no accumulator, so each slot only got one element from the right. Second attempt added `run` but read `output[j]` while writing `output[j-1]`, and the range skipped index n-1.
   Must get, unprompted: the framing sentence first, "output[i] = everything left of i × everything right of i" · left pass writes into `output` · right pass uses ONE variable, not an array · walk EVERY index, `reversed(range(len(nums)))` · read and write the SAME slot · multiply into `output[i]` FIRST, then fold `nums[i]` into the variable.
@@ -31,6 +27,7 @@ Redo it cold. When it comes out unaided, move it to Closed with both dates.
 - [x] 5 Sep — Group Anagrams — counting key needed heavy prompting — structurally right cold 6 Sep, including `[0] * 26` inside the loop
 - [x] 18 Sep — Missing Number (XOR) — over 25 min, needed the `[0,1,3]` trace — solved cold 24 Sep with a two-pass XOR, unaided
 - [x] 21 Sep — Subarray Sum Equals K — needed the full code before the idea landed — solved cold 24 Sep
+- [x] 5 Sep — Majority Element (Boyer-Moore) — failed cold twice (check at the bottom) — solved cold 1 Oct with the check at the top, and stated the argument after one clue: each decrement cancels a pair, the majority has more than n/2 copies, so the others run out first. Cold code used two `if`s instead of `if / elif / else`: correct, but write the three-branch version next time
 
 ## Recurring habits (not problems)
 
