@@ -232,3 +232,26 @@ return output
 - Moving the tall wall instead could throw away containers that are still bigger.
 - Compute the area once per loop (variable or max()).
 - O(n) time, O(1) space.
+
+# Week 4 Saturday PM · Pandas I
+
+## pandas ↔ SQL
+- df[["a", "b"]]                      → SELECT a, b
+- df["new"] = df["salary"] / 365      → SELECT salary / 365 AS new
+- df.rename(columns={"old": "new"})   → SELECT old AS new
+- df[df["salary"] > 100000]           → WHERE salary > 100000
+- df[df["salary"] > 100000][["a", "b"]] → SELECT a, b ... WHERE ...
+- df.loc[df["salary"] > 100000, ["a", "b"]] → same thing, rows and columns in one go
+
+## Brackets
+- df["a"]          → one column (a Series)
+- df[["a", "b"]]   → several columns (a DataFrame). Outer brackets select, inner is a list.
+- df["a", "b"]     → KeyError. Looks for one column named ("a", "b").
+
+## Methods return a new object
+- rename, sort_values, drop, fillna don't change df. Assign (df = df.rename(...)) or chain.
+- Same as sorted(nums) vs nums.sort().
+- StrataScratch shows whatever the LAST line evaluates to, so an unassigned rename can pass by luck if it's last. Don't rely on it.
+
+## Order
+- Filter rows first, then pick columns. Same as WHERE before SELECT.

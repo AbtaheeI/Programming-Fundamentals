@@ -43,6 +43,8 @@ These cost time in multiple sessions. None of them are conceptual.
 - **Dead edge-case branches** — 18 Sep, `range_sum` had `if len(prefix) == 0` and `== 1` guards that could never fire. Edge cases are things to **test**, not `if`s to add. Ask "can this condition actually happen?" before writing the branch
 - **Fixed details regressing on the cold redo** — Plus One on 24 Sep lost the early return and the `if carry:` after the loop, both of which were fixed on Friday. Then dropped the final `return digits`. The logic survived, the details didn't. When you close a problem, write down the two or three details you had to be told, and check for them on the redo
 - **Loop bounds off by one** — `range(1, len(nums), -1)`, stop at 1 instead of -1, `range(len(nums) - 1)` skipping the last index. Before running any loop, say out loud which indices it visits
+- **Calling something that returns a new object and not keeping it** — `sorted(nums)` on its own in 3Sum (30 Sep), then `df.rename(...)` twice on 1 Oct. `sorted()` and most pandas methods (`rename`, `sort_values`, `drop`, `fillna`) don't change the original. Assign it (`df = df.rename(...)`) or chain it, or it's gone
+- **One set of brackets for several columns** — `df["a", "b", "c"]` twice on 1 Oct. That looks for one column named the whole tuple. Several columns = `df[["a", "b", "c"]]`
 - **Returning `nums` from in-place functions** — Monday reverse, Wednesday Move Zeroes. In-place means return nothing (or k if asked). Returning the list makes callers think it's a copy
 
 ## SQL habits
